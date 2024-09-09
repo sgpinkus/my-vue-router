@@ -1,6 +1,6 @@
 {
   "name": "@sgpinkus/my-vue-router",
-  "version": "1.0.8",
+  "version": "1.0.1",
   "description": "A very simple Vue router",
   "author": "sgpinkus",
   "license": "MIT",
@@ -22,10 +22,7 @@
     "test": "TS_NODE_PROJECT=tsconfig.node.json mocha --require ts-node/register 'src/test.ts'"
   },
   "main": "dist/index.js",
-  "types": "dist/types",
-  "exports": {
-    "import": "./dist/index.js"
-  },
+  "types": "dist/types/",
   "dependencies": {
     "path-to-regexp": "^8.0.0",
     "vue": "^3.5.3"
