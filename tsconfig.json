@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "declarationMap": false,
+    "declarationDir": "./dist/types",
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "outDir": "./dist/",
+    "removeComments": false,
+    "sourceMap": false,
+    "strictNullChecks": true,
+    "target": "ES6"
+  },
+  "compileOnSave": true,
+  "exclude": [
+    "node_modules/*",
+    "**/*-aot.ts",
+    "**/*test.ts"
+  ],
+  "include": [
+    "src/**.ts",
+    "src/**/*.ts"
+  ]
+}

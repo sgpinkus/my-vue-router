@@ -1,0 +1,42 @@
+{
+  "name": "@sgpinkus/my-vue-router",
+  "version": "1.0.8",
+  "description": "A very simple Vue router",
+  "author": "sgpinkus",
+  "license": "MIT",
+  "keywords": [
+    "my",
+    "vue",
+    "router"
+  ],
+  "homepage": "https://github.com/sgpinkus/my-vue-router",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sgpinkus/my-vue-router"
+  },
+  "scripts": {
+    "build-watch": "tsc -w",
+    "build": "tsc",
+    "lint": "eslint src/",
+    "prepare": "npm run build",
+    "test": "TS_NODE_PROJECT=tsconfig.node.json mocha --require ts-node/register 'src/test.ts'"
+  },
+  "main": "dist/index.js",
+  "types": "dist/types",
+  "exports": {
+    "import": "./dist/index.js"
+  },
+  "dependencies": {
+    "path-to-regexp": "^8.0.0",
+    "vue": "^3.5.3"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.8.0",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^22.5.4",
+    "@vue/runtime-core": "^3.5.3",
+    "eslint": "^9.10.0",
+    "eslint-plugin-vue": "^9.23.0",
+    "typescript": "~5.4.0"
+  }
+}
