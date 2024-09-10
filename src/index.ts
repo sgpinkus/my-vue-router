@@ -1,4 +1,4 @@
-import { defineComponent, h, shallowRef } from 'vue';
+import { computed, defineComponent, h, ref, shallowRef, watch } from 'vue';
 import type { App, PropType } from '@vue/runtime-core';
 import { match, compile } from 'path-to-regexp';
 import type { Route, ComponentRoute, RedirectRoute } from './types';
@@ -7,13 +7,17 @@ export type { Route, ComponentRoute, RedirectRoute } from './types';
 type CompiledRoute = Route & {
   _match: ReturnType<typeof match>;
   _compile: ReturnType<typeof compile>;
+  _id: number;
 }
 
 const NullComponent = () => h('div');
-const NullRoute: ComponentRoute = {
+const NullRoute: CompiledRoute = {
   name: 'null',
   path: '*',
   component: NullComponent,
+  _match: () => false,
+  _compile: () => '',
+  _id: -1,
 };
 let router: Router | null = null;
 
@@ -53,19 +57,26 @@ function scrollHash(path: string) {
   }
 }
 
+function isCurentPath(path: string) {
+  const currentPath = window.location.href.replace(window.location.origin, '');
+  console.log(path, currentPath);
+  return currentPath === path;
+}
+
 export class Router {
-  currentRoute = shallowRef<Route>(NullRoute);
+  currentRoute = shallowRef<CompiledRoute>(NullRoute);
+  currentPath = ref<string>('');
   currentRouteParams = {};
   routes: CompiledRoute[] = [];
 
   constructor(routes: Route[]) {
-    this.routes = routes.map(v => ({ ...v, _match: match(v.path), _compile: compile(v.path) })); // Slower but do up front to fail fast.
+    this.routes = routes.map((v, _id) => ({ ...v, _match: match(v.path), _compile: compile(v.path), _id })); // Slower but do up front to fail fast.
     const path = new URL(window.location.href).pathname; // .replace(/\/+$/, '/'); No.
     this.setPath(path);
     window.addEventListener('popstate', (event) => this.historyPopState(event));
   }
 
-  matchPath(path: string): { route: Route } & ReturnType<ReturnType<typeof match>> | undefined {
+  matchPath(path: string): { route: CompiledRoute | undefined, params: Record<string, any> }  {
     const _url = parseUrl(path);
     for(const route of this.routes) {
       const m = route._match(_url.pathname);
@@ -73,14 +84,29 @@ export class Router {
         return { route, ...m };
       }
     }
+    return { route: undefined, params: {} }
+  }
+
+  matchName(name: string, params: Record<string, any> = {}): { route: CompiledRoute | undefined, path: string } {
+    for(const route of this.routes) {
+      if(route.name === name) {
+        try {
+          const path = route._compile(params);
+          if (path) return { route, path }; // This throws if the params are not compatible with route.
+        } catch {
+          continue;
+        }
+      }
+    }
+    return { route: undefined, path: '' };
   }
 
   private setPath(path: string, push = true) {
-    const m = this.matchPath(path);
-    if (!m) return;
-    const { route, params } = m;
+    const { route, params } = this.matchPath(path);
+    if (!route) return;
     if (isAComponentRoute(route)) {
       this.currentRoute.value = route;
+      this.currentPath.value = path;
       this.currentRouteParams = params;
       push && history.pushState({ path }, '', path);
       scrollHash(path);
@@ -89,20 +115,12 @@ export class Router {
     }
   }
 
-  matchName(name: string) {
-    for(const route of this.routes) {
-      if(route.name === name) {
-        return route;
-      }
-    }
-  }
-
   private setName(name: string, params: Record<string, any> = {}, push = true) {
-    const route = this.matchName(name);
-    if(!route) return;
+    const { route, path } = this.matchName(name, params);
+    if (!route) return;
     if (isAComponentRoute(route)) {
-      const path = route._compile(params); // This throws if the params are not compatible with route.
       this.currentRoute.value = route;
+      this.currentPath.value = path;
       this.currentRouteParams = params;
       push && history.pushState({ name, params }, '', path);
     } else if (isARedirectRoute(route)) {
@@ -119,6 +137,10 @@ export class Router {
     return  { ...prop, params: this.currentRouteParams };
   }
 
+  isActiveRoute(route: CompiledRoute) {
+    return route._id === this.currentRoute.value._id
+  }
+
   install(app: App) {
     app.component('RouteLink', RouteLink);
     app.component('RouteName', RouteName);
@@ -127,6 +149,7 @@ export class Router {
   }
 
   historyPopState(event: PopStateEvent) {
+    console.debug('historyPopState', event);
     if(!event || !event.state) return;
     if('name' in event.state) {
       this.setName(event.state.name, event.state.params, false);
@@ -137,6 +160,7 @@ export class Router {
   }
 
   dispatch(target: { name: string, params?: Record<string, any> } | { path: string }) {
+    console.debug('dispatch', target);
     if(history.state && shallowIsEqual(history.state, target)) return;
     if('name' in target) {
       this.setName(target.name, target.params);
@@ -157,11 +181,22 @@ export const RouteLink = defineComponent({
     },
   },
   setup(props, { slots }) {
+    const { route: myRoute } = router!.matchPath(props.path);
+    let elClass = ref({});
+
+    watch([router?.currentRoute, router?.currentPath], () => {
+      elClass.value = {
+        'route-link': true,
+        'route-link-active': myRoute ? router!.isActiveRoute(myRoute) : false,
+        'route-link-hyper-active': isCurentPath(props.path),
+      }
+    }, { immediate: true });
     return () => {
       return h(
         'a',
         {
-          onClick: () => router!.dispatch({ path: props.path }),
+          onClick: (e) => { router!.dispatch({ path: props.path }); e.preventDefault(); },
+          class: elClass.value,
           href: props.path,
         },
         slots.default && slots.default()
@@ -183,11 +218,24 @@ export const RouteName = defineComponent({
     },
   },
   setup(props, { slots }) {
+    const { route: myRoute, path } = router!.matchName(props.name, props.params);
+    let elClass = ref({});
+
+    watch([router?.currentRoute, router?.currentPath], () => {
+    elClass.value = {
+      'route-link': true,
+      'route-link-active': myRoute ? router!.isActiveRoute(myRoute) : false,
+      'route-link-hyper-active': isCurentPath(path),
+    }
+  }, { immediate: true });
+
     return () => {
       return h(
         'a',
         {
-          onClick: () => router!.dispatch({ name: props.name, params: props.params }),
+          onClick: (e) => { router!.dispatch({ name: props.name, params: props.params }); ; e.preventDefault(); },
+          href: path,
+          class: elClass.value,
         },
         slots.default && slots.default()
       );
