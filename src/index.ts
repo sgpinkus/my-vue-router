@@ -2,6 +2,7 @@ import { defineComponent, h, shallowRef } from 'vue';
 import type { App, PropType } from '@vue/runtime-core';
 import { match, compile } from 'path-to-regexp';
 import type { Route, ComponentRoute, RedirectRoute } from './types';
+export type { Route, ComponentRoute, RedirectRoute } from './types';
 
 type CompiledRoute = Route & {
   _match: ReturnType<typeof match>;
@@ -45,6 +46,7 @@ export class Router {
     const path = new URL(window.location.href).pathname; // .replace(/\/+$/, '/'); No.
     this.setPath(path);
     window.addEventListener('popstate', (event) => this.historyPopState(event));
+    // history.scrollRestoration = 'auto';
   }
 
   matchPath(path: string): { route: Route } & ReturnType<ReturnType<typeof match>> | undefined {

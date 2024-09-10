@@ -22,7 +22,7 @@
     "test": "TS_NODE_PROJECT=tsconfig.node.json mocha --require ts-node/register 'src/test.ts'"
   },
   "main": "dist/index.js",
-  "types": "dist/types/",
+  "types": "dist/types/index.d.ts",
   "dependencies": {
     "path-to-regexp": "^8.0.0",
     "vue": "^3.5.3"
