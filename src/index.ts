@@ -59,7 +59,6 @@ function scrollHash(path: string) {
 
 function isCurentPath(path: string) {
   const currentPath = window.location.href.replace(window.location.origin, '');
-  console.log(path, currentPath);
   return currentPath === path;
 }
 
