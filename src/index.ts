@@ -36,6 +36,23 @@ function shallowIsEqual(a: Record<any, any>, b: Record<any, any>) {
   return Object.entries(a).every(([k, v]: any) => b[k] === v);
 }
 
+function parseUrl(u: string) {
+  return new URL(u, 'http://dummy-base.local');
+}
+
+/**
+ * Some many route-links may share the same path and route match but have different #hash.
+ * Since we're override anchor and adding history items ourselves we have to re-imp #has scroll too.
+ * @param path
+ */
+function scrollHash(path: string) {
+  const hash = parseUrl(path).hash.replace(/^#/, '');
+  if(hash) {
+    const el = document.querySelector(`a[name="${hash}"`) || document.querySelector(`a[id="${hash}"`);
+    el && el.scrollIntoView({});
+  }
+}
+
 export class Router {
   currentRoute = shallowRef<Route>(NullRoute);
   currentRouteParams = {};
@@ -46,12 +63,12 @@ export class Router {
     const path = new URL(window.location.href).pathname; // .replace(/\/+$/, '/'); No.
     this.setPath(path);
     window.addEventListener('popstate', (event) => this.historyPopState(event));
-    // history.scrollRestoration = 'auto';
   }
 
   matchPath(path: string): { route: Route } & ReturnType<ReturnType<typeof match>> | undefined {
+    const _url = parseUrl(path);
     for(const route of this.routes) {
-      const m = route._match(path);
+      const m = route._match(_url.pathname);
       if(m) {
         return { route, ...m };
       }
@@ -66,6 +83,7 @@ export class Router {
       this.currentRoute.value = route;
       this.currentRouteParams = params;
       push && history.pushState({ path }, '', path);
+      scrollHash(path);
     } else if (isARedirectRoute(route)) {
       window.location.href = route.redirect;
     }
@@ -109,18 +127,23 @@ export class Router {
   }
 
   historyPopState(event: PopStateEvent) {
-    console.log(event);
     if(!event || !event.state) return;
-    if('name' in event.state) this.setName(event.state.name, event.state.params, false);
-    else if ('path' in event.state) this.setPath(event.state.path, false);
+    if('name' in event.state) {
+      this.setName(event.state.name, event.state.params, false);
+    }
+    else if ('path' in event.state) {
+      this.setPath(event.state.path, false);
+    }
   }
 
   dispatch(target: { name: string, params?: Record<string, any> } | { path: string }) {
     if(history.state && shallowIsEqual(history.state, target)) return;
     if('name' in target) {
       this.setName(target.name, target.params);
+      return true;
     } else if('path' in target) {
       this.setPath(target.path);
+      return true;
     }
   }
 }
@@ -139,6 +162,7 @@ export const RouteLink = defineComponent({
         'a',
         {
           onClick: () => router!.dispatch({ path: props.path }),
+          href: props.path,
         },
         slots.default && slots.default()
       );
