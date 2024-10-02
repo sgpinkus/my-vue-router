@@ -45,7 +45,7 @@ function parseUrl(u: string) {
 }
 
 /**
- * Some many route-links may share the same path and route match but have different #hash.
+ * Some many route-paths may share the same path and route match but have different #hash.
  * Since we're override anchor and adding history items ourselves we have to re-imp #has scroll too.
  * @param path
  */
@@ -141,7 +141,7 @@ export class Router {
   }
 
   install(app: App) {
-    app.component('RouteLink', RouteLink);
+    app.component('RoutePath', RoutePath);
     app.component('RouteName', RouteName);
     app.component('RouteView', RouteView);
     // app.config.globalProperties.$router = this;
@@ -171,8 +171,8 @@ export class Router {
   }
 }
 
-export const RouteLink = defineComponent({
-  name: 'RouteLink',
+export const RoutePath = defineComponent({
+  name: 'RoutePath',
   props: {
     path: {
       type: String as PropType<string>,
@@ -185,9 +185,9 @@ export const RouteLink = defineComponent({
 
     watch([router?.currentRoute, router?.currentPath], () => {
       elClass.value = {
-        'route-link': true,
-        'route-link-active': myRoute ? router!.isActiveRoute(myRoute) : false,
-        'route-link-hyper-active': isCurentPath(props.path),
+        'route-path': true,
+        'route-path-active': myRoute ? router!.isActiveRoute(myRoute) : false,
+        'route-path-hyper-active': isCurentPath(props.path),
       }
     }, { immediate: true });
     return () => {
@@ -222,9 +222,9 @@ export const RouteName = defineComponent({
 
     watch([router?.currentRoute, router?.currentPath], () => {
     elClass.value = {
-      'route-link': true,
-      'route-link-active': myRoute ? router!.isActiveRoute(myRoute) : false,
-      'route-link-hyper-active': isCurentPath(path),
+      'route-path': true,
+      'route-path-active': myRoute ? router!.isActiveRoute(myRoute) : false,
+      'route-path-hyper-active': isCurentPath(path),
     }
   }, { immediate: true });
 

@@ -46,6 +46,6 @@ app.use(createRouter(routes));
 ```
 ...
 <route-view></route-view>
-<route-link :path='/home'>HOME</route-link>
-<route-name :name='contact'>CONTACT</route-link>
+<route-path :path='/home'>HOME</route-path>
+<route-name :name='contact'>CONTACT</route-path>
 ```
