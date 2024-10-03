@@ -10,7 +10,12 @@ type CompiledRoute = Route & {
   _id: number;
 }
 
+type RouterOptions = {
+  installGlobalRef?: boolean;
+}
+
 const NullComponent = () => h('div');
+
 const NullRoute: CompiledRoute = {
   name: 'null',
   path: '*',
@@ -22,8 +27,8 @@ const NullRoute: CompiledRoute = {
 let router: Router | null = null;
 
 
-export function createRouter(routes: Route[]) {
-    router = new Router(routes);
+export function createRouter(routes: Route[], options: RouterOptions = {}) {
+    router = new Router(routes, options);
     return router;
 }
 
@@ -67,8 +72,13 @@ export class Router {
   currentPath = ref<string>('');
   currentRouteParams = {};
   routes: CompiledRoute[] = [];
+  options: RouterOptions = {};
+  static defaultRouterOptions: RouterOptions = {
+    installGlobalRef: true,
+  }
 
-  constructor(routes: Route[]) {
+  constructor(routes: Route[], options: RouterOptions = {}) {
+    this.options =  { ...Router.defaultRouterOptions, ...options };
     this.routes = routes.map((v, _id) => ({ ...v, _match: match(v.path), _compile: compile(v.path), _id })); // Slower but do up front to fail fast.
     const path = new URL(window.location.href).pathname; // .replace(/\/+$/, '/'); No.
     this.setPath(path);
@@ -144,7 +154,7 @@ export class Router {
     app.component('RoutePath', RoutePath);
     app.component('RouteName', RouteName);
     app.component('RouteView', RouteView);
-    app.config.globalProperties.$router = this;
+    if(this.options.installGlobalRef) app.config.globalProperties.$router = this;
   }
 
   historyPopState(event: PopStateEvent) {
