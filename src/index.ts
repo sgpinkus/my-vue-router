@@ -11,7 +11,15 @@ type CompiledRoute = Route & {
 }
 
 type RouterOptions = {
-  installGlobalRef?: boolean;
+  installGlobalRef?: false | string;
+  routeProp?: boolean;
+  paramsToProps?: boolean;
+}
+
+const defaultRouterOptions: RouterOptions = {
+  installGlobalRef: '$router',
+  routeProp: false,
+  paramsToProps: false,
 }
 
 const NullComponent = () => h('div');
@@ -73,12 +81,9 @@ export class Router {
   currentRouteParams = {};
   routes: CompiledRoute[] = [];
   options: RouterOptions = {};
-  static defaultRouterOptions: RouterOptions = {
-    installGlobalRef: true,
-  }
 
   constructor(routes: Route[], options: RouterOptions = {}) {
-    this.options =  { ...Router.defaultRouterOptions, ...options };
+    this.options =  { ...defaultRouterOptions, ...options };
     this.routes = routes.map((v, _id) => ({ ...v, _match: match(v.path), _compile: compile(v.path), _id })); // Slower but do up front to fail fast.
     const path = new URL(window.location.href).pathname; // .replace(/\/+$/, '/'); No.
     this.setPath(path);
@@ -154,7 +159,7 @@ export class Router {
     app.component('RoutePath', RoutePath);
     app.component('RouteName', RouteName);
     app.component('RouteView', RouteView);
-    if(this.options.installGlobalRef) app.config.globalProperties.$router = this;
+    if(this.options.installGlobalRef) app.config.globalProperties[this.options.installGlobalRef] = this;
   }
 
   historyPopState(event: PopStateEvent) {
@@ -262,12 +267,20 @@ export const RouteView = defineComponent({
       if (typeof currentRoute?.props === 'function') routeProps = currentRoute?.props(currentRoute);
       else if (currentRoute?.props) routeProps = currentRoute?.props;
 
-      if(currentRoute.routeProp) routeProps.route = router?.currentRouteProp();
+      if(hasOption('routeProp', currentRoute, router!)) routeProps.route = router?.currentRouteProp();
+      if(hasOption('paramsToProps', currentRoute, router!)) routeProps = { ...routeProps, ...router!.currentRouteParams };
 
       const view = currentRoute?.component ? h(currentRoute.component, routeProps) : [];
 
       // console.debug('View render', (currentRoute as any).__file);
-      return h('div', view);
+      return h(view);
     };
   }
 });
+
+
+function hasOption(name: 'paramsToProps' | 'routeProp', route: ComponentRoute, router: Router) {
+  if(route[name]) return route[name];
+  if(router.options[name]) return router.options[name];
+  return false;
+}

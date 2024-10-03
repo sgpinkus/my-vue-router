@@ -7,8 +7,9 @@ export interface BaseRoute {
 }
 
 export interface ComponentRoute extends BaseRoute {
-  props?: Record<string, any> | ((r: Route) => Record<string, any>);
-  routeProp?: boolean,
+  props?: Record<string, any> | ((r: Route) => Record<string, any>); // Add thes props.
+  routeProp?: boolean; // Add a prop "route" holding this matched route.
+  paramsToProps?: boolean; // Add a prop for every param that has a value.
   component: Component;
 }
 
