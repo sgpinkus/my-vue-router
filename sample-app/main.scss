@@ -1,0 +1,24 @@
+* { border: 0; padding: 0; margin: 0 }
+
+#main-container {
+  height: 100vh;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+header, footer {
+  padding: 1em;
+  min-height: 2em;
+  background-color: aliceblue;
+  justify-content: center;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-flow: row nowrap;
+  padding: 1em;
+}
