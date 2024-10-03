@@ -107,7 +107,7 @@ export class Router {
       this.currentRoute.value = route;
       this.currentPath.value = path;
       this.currentRouteParams = params;
-      push && history.pushState({ path }, '', path);
+      push && window.history.pushState({ path }, '', path);
       scrollHash(path);
     } else if (isARedirectRoute(route)) {
       window.location.href = route.redirect;
@@ -121,7 +121,7 @@ export class Router {
       this.currentRoute.value = route;
       this.currentPath.value = path;
       this.currentRouteParams = params;
-      push && history.pushState({ name, params }, '', path);
+      push && window.history.pushState({ name, params }, '', path);
     } else if (isARedirectRoute(route)) {
       window.location.href = route.redirect;
     }
@@ -144,11 +144,11 @@ export class Router {
     app.component('RoutePath', RoutePath);
     app.component('RouteName', RouteName);
     app.component('RouteView', RouteView);
-    // app.config.globalProperties.$router = this;
+    app.config.globalProperties.$router = this;
   }
 
   historyPopState(event: PopStateEvent) {
-    console.debug('historyPopState', event);
+    // console.debug('historyPopState', event);
     if(!event || !event.state) return;
     if('name' in event.state) {
       this.setName(event.state.name, event.state.params, false);
@@ -159,8 +159,8 @@ export class Router {
   }
 
   dispatch(target: { name: string, params?: Record<string, any> } | { path: string }) {
-    console.debug('dispatch', target);
-    if(history.state && shallowIsEqual(history.state, target)) return;
+    // console.debug('dispatch', target);
+    if(window.history.state && shallowIsEqual(window.history.state, target)) return;
     if('name' in target) {
       this.setName(target.name, target.params);
       return true;
@@ -256,7 +256,7 @@ export const RouteView = defineComponent({
 
       const view = currentRoute?.component ? h(currentRoute.component, routeProps) : [];
 
-      console.log('View render', (currentRoute as any).__file);
+      // console.debug('View render', (currentRoute as any).__file);
       return h('div', view);
     };
   }

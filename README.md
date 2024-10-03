@@ -1,9 +1,9 @@
 # MY-VUE-ROUTER
-Simple alternative to vue-router, with %12 of the code and %7 of the features!
+Simple 250LOC single file alternative to vue-router, with many fewer features.
 
   - Simple flat routing table - no nested.
+  - No entry guards, no async, no name views, no ...
   - Using path-to-regexp for param parsing.
-  - No entry guards, no async, no global $route and $router, no named views, no other stuff.
   - Works transparently with #fragments.
 
 # USAGE
@@ -45,7 +45,11 @@ app.use(createRouter(routes));
 
 ```
 ...
+// Template components:
 <route-view></route-view>
 <route-path :path='/home'>HOME</route-path>
 <route-name :name='contact'>CONTACT</route-path>
+...
+// Programatic routing:
+$router.dispatch({ name: 'contact' });
 ```

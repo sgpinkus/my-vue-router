@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+  },
+  "exclude": [
+    "node_modules/*",
+    "**/*-aot.ts"
+  ],
+  "include": [
+    "src/test.ts"
+  ]
+}
