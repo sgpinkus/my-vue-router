@@ -60,7 +60,7 @@ const data = {
   }
 
   .main, .nav {
-    border: solid 1px green;
+    border: solid 1px saddlebrown;
   }
 
   li {

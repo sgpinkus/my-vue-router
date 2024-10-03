@@ -78,7 +78,7 @@ function isCurentPath(path: string) {
 export class Router {
   currentRoute = shallowRef<CompiledRoute>(NullRoute);
   currentPath = ref<string>('');
-  currentRouteParams = {};
+  currentRouteParams = ref({});
   routes: CompiledRoute[] = [];
   options: RouterOptions = {};
 
@@ -121,7 +121,7 @@ export class Router {
     if (isAComponentRoute(route)) {
       this.currentRoute.value = route;
       this.currentPath.value = path;
-      this.currentRouteParams = params;
+      this.currentRouteParams.value = params;
       push && window.history.pushState({ path }, '', path);
       scrollHash(path);
     } else if (isARedirectRoute(route)) {
@@ -135,7 +135,7 @@ export class Router {
     if (isAComponentRoute(route)) {
       this.currentRoute.value = route;
       this.currentPath.value = path;
-      this.currentRouteParams = params;
+      this.currentRouteParams.value = params;
       push && window.history.pushState({ name, params }, '', path);
     } else if (isARedirectRoute(route)) {
       window.location.href = route.redirect;
@@ -148,7 +148,7 @@ export class Router {
       Object.entries(this.currentRoute.value)
         .filter(([k]) => pick.includes(k))
     );
-    return  { ...prop, params: this.currentRouteParams };
+    return  { ...prop, params: this.currentRouteParams.value };
   }
 
   isActiveRoute(route: CompiledRoute) {
@@ -268,7 +268,7 @@ export const RouteView = defineComponent({
       else if (currentRoute?.props) routeProps = currentRoute?.props;
 
       if(hasOption('routeProp', currentRoute, router!)) routeProps.route = router?.currentRouteProp();
-      if(hasOption('paramsToProps', currentRoute, router!)) routeProps = { ...routeProps, ...router!.currentRouteParams };
+      if(hasOption('paramsToProps', currentRoute, router!)) routeProps = { ...routeProps, ...router!.currentRouteParams.value };
 
       const view = currentRoute?.component ? h(currentRoute.component, routeProps) : [];
 
