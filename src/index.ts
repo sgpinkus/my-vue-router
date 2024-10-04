@@ -180,15 +180,16 @@ export class Router {
   }
 
   dispatch(target: { name: string, params?: Record<string, any> } | { path: string }) {
-    let _dispatched = false;
+    let dispatched = false;
     const type = 'name' in target ? 'name' : 'path' in target ? 'path' : undefined;
     if(window.history.state && shallowIsEqual(window.history.state, target)) return;
     if('name' in target) {
-      _dispatched = this.setName(target.name, target.params);
+      dispatched = this.setName(target.name, target.params);
     } else if('path' in target) {
-      _dispatched = this.setPath(target.path);
+      dispatched = this.setPath(target.path);
     }
-    debug(`dispatch by ${type} [${_dispatched}]`, target);
+    debug(`dispatch by ${type} [${dispatched}]`, target);
+    return dispatched;
   }
 }
 

@@ -1,8 +1,7 @@
-import { describe } from 'mocha';
-import { expect } from 'chai';
 import { defineComponent, h } from 'vue';
 import { createRouter, type Route } from './index';
 import { JSDOM } from 'jsdom';
+import { expect, test,describe } from 'vitest'
 
 globalThis.window = (new JSDOM('', { url: 'https://example.org/' })).window;
 
@@ -64,7 +63,7 @@ const routes: Route[] = [
 const router = createRouter(routes);
 
 describe('Router', () => {
-  it('routes', () => {
+  test('routes', () => {
     expect(window.history.state).deep.equals({ path: '/' });
     expect(router.dispatch({ name: 'contact' })).equals(true);
     expect(window.history.state).deep.equals({ name: 'contact', params: {} });
