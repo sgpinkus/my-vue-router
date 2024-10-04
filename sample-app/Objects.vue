@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { defineProps } from 'vue';
+import { computed, defineProps, ref, watch } from 'vue';
+import router from './router';
 
 interface Props {
   objectId?: string,
 }
 
-const { objectId } = defineProps<Props>()
+const { objectId } = defineProps<Props>(); // You can destructure a prop from v3.4 but you can't watch it .. ->
+const watchObjectId = computed(() => ({ objectId }));
 
 const data = {
   'fcc7080c-815a-11ef-894e-5be1fea10946': {
@@ -21,15 +23,29 @@ const data = {
     type: 'pony',
   }
 }
+
+watch([watchObjectId],
+  () => {
+    console.log(objectId);
+    if (objectId && !(objectId in data)) {
+      router.dispatch({ name: 'resource-not-found', params: { resource: objectId } });
+    }
+  }, {
+    immediate: true
+  }
+);
+
 </script>
 
 <template>
   <div class='container'>
     <div class='nav'>
       <ul>
+        <li><route-name name='objects'>Top</route-name></li>
         <li v-for='(k, v) in data' :key='k.id'>
           <route-path :path='`/objects/${v}`'>{{ v }}</route-path>
         </li>
+        <li><route-path :path='`/objects/dne`'>deleted</route-path></li>
       </ul>
     </div>
     <div class='main'>
@@ -56,11 +72,11 @@ const data = {
     flex: 4;
     flex-grow: 2;
     min-width: 200px;
-    padding: 1em;
   }
 
   .main, .nav {
     border: solid 1px saddlebrown;
+    padding: 1em;
   }
 
   li {

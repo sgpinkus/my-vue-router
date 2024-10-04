@@ -1,8 +1,10 @@
-import { computed, defineComponent, h, ref, shallowRef, watch } from 'vue';
+import { computed, defineComponent, h, ref, shallowRef, watch, InjectionKey } from 'vue';
 import type { App, PropType } from '@vue/runtime-core';
 import { match, compile } from 'path-to-regexp';
 import type { Route, ComponentRoute, RedirectRoute } from './types';
 export type { Route, ComponentRoute, RedirectRoute } from './types';
+
+export const RouterInjectionKey = Symbol() as InjectionKey<Router>;
 
 type CompiledRoute = Route & {
   _match: ReturnType<typeof match>;
@@ -58,7 +60,7 @@ function parseUrl(u: string) {
 }
 
 /**
- * Some many route-paths may share the same path and route match but have different #hash.
+ * Some many routes may share the same path and route match but have different #hash.
  * Since we're override anchor and adding history items ourselves we have to re-imp #has scroll too.
  * @param path
  */
@@ -107,7 +109,8 @@ export class Router {
         try {
           const path = route._compile(params);
           if (path) return { route, path }; // This throws if the params are not compatible with route.
-        } catch {
+        } catch(e) {
+          console.error(e);
           continue;
         }
       }
@@ -117,7 +120,7 @@ export class Router {
 
   private setPath(path: string, push = true) {
     const { route, params } = this.matchPath(path);
-    if (!route) return;
+    if (!route) return false;
     if (isAComponentRoute(route)) {
       this.currentRoute.value = route;
       this.currentPath.value = path;
@@ -127,11 +130,12 @@ export class Router {
     } else if (isARedirectRoute(route)) {
       window.location.href = route.redirect;
     }
+    return true;
   }
 
   private setName(name: string, params: Record<string, any> = {}, push = true) {
     const { route, path } = this.matchName(name, params);
-    if (!route) return;
+    if (!route) return false;
     if (isAComponentRoute(route)) {
       this.currentRoute.value = route;
       this.currentPath.value = path;
@@ -140,6 +144,7 @@ export class Router {
     } else if (isARedirectRoute(route)) {
       window.location.href = route.redirect;
     }
+    return true;
   }
 
   currentRouteProp() {
@@ -159,11 +164,12 @@ export class Router {
     app.component('RoutePath', RoutePath);
     app.component('RouteName', RouteName);
     app.component('RouteView', RouteView);
+    app.provide(RouterInjectionKey, this);
     if(this.options.installGlobalRef) app.config.globalProperties[this.options.installGlobalRef] = this;
   }
 
   historyPopState(event: PopStateEvent) {
-    // console.debug('historyPopState', event);
+    debug('historyPopState', event);
     if(!event || !event.state) return;
     if('name' in event.state) {
       this.setName(event.state.name, event.state.params, false);
@@ -174,15 +180,15 @@ export class Router {
   }
 
   dispatch(target: { name: string, params?: Record<string, any> } | { path: string }) {
-    // console.debug('dispatch', target);
+    let _dispatched = false;
+    const type = 'name' in target ? 'name' : 'path' in target ? 'path' : undefined;
     if(window.history.state && shallowIsEqual(window.history.state, target)) return;
     if('name' in target) {
-      this.setName(target.name, target.params);
-      return true;
+      _dispatched = this.setName(target.name, target.params);
     } else if('path' in target) {
-      this.setPath(target.path);
-      return true;
+      _dispatched = this.setPath(target.path);
     }
+    debug(`dispatch by ${type} [${_dispatched}]`, target);
   }
 }
 
@@ -200,9 +206,9 @@ export const RoutePath = defineComponent({
 
     watch([router?.currentRoute, router?.currentPath], () => {
       elClass.value = {
-        'route-path': true,
-        'route-path-active': myRoute ? router!.isActiveRoute(myRoute) : false,
-        'route-path-hyper-active': isCurentPath(props.path),
+        'route': true,
+        'route-active': myRoute ? router!.isActiveRoute(myRoute) : false,
+        'route-hyper-active': isCurentPath(props.path),
       }
     }, { immediate: true });
     return () => {
@@ -237,9 +243,9 @@ export const RouteName = defineComponent({
 
     watch([router?.currentRoute, router?.currentPath], () => {
     elClass.value = {
-      'route-path': true,
-      'route-path-active': myRoute ? router!.isActiveRoute(myRoute) : false,
-      'route-path-hyper-active': isCurentPath(path),
+      'route': true,
+      'route-active': myRoute ? router!.isActiveRoute(myRoute) : false,
+      'route-hyper-active': isCurentPath(path),
     }
   }, { immediate: true });
 
@@ -272,7 +278,7 @@ export const RouteView = defineComponent({
 
       const view = currentRoute?.component ? h(currentRoute.component, routeProps) : [];
 
-      // console.debug('View render', (currentRoute as any).__file);
+      debug('View render', (currentRoute as any).__file);
       return h(view);
     };
   }
@@ -280,7 +286,11 @@ export const RouteView = defineComponent({
 
 
 function hasOption(name: 'paramsToProps' | 'routeProp', route: ComponentRoute, router: Router) {
-  if(route[name]) return route[name];
-  if(router.options[name]) return router.options[name];
-  return false;
+  return route[name] || router.options[name] || false;
+}
+
+
+function debug(...args: any[]) {
+  // @ts-ignore
+  if(import.meta.env.DEV) console.debug(...args);
 }

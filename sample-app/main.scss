@@ -22,3 +22,11 @@ main {
   flex-flow: row nowrap;
   padding: 1em;
 }
+
+.route-active {
+  color: red;
+}
+
+.route-hyper-active {
+  font-weight: bolder;
+}

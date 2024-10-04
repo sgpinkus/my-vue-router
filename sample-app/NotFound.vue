@@ -1,33 +1,29 @@
-<script lang='ts'>
+<script setup lang='ts'>
 import { isArray } from 'lodash';
-import { defineComponent } from 'vue';
+import { computed, defineProps } from 'vue';
 
-export default defineComponent({
-  props: {
-    route: { type: Object },
-  },
-  computed: {
-    pathMatch() { return this.route.params.pathMatch; },
-    path() {
-      return '/' + this.pathMatch.join('/');
-    },
-  },
-  methods: {
-    back() {
-      window.history.go(-1);
-    }
-  },
-  data(): any { return {}; } // "Property '$route' does not exist on .." Yes it does!
-});
+type props = {
+  route: any, // Can use paramsToProps instead. Just testing.
+}
+
+const { route } = defineProps<props>();
+const pathMatch = computed(() => route.params.pathMatch);
+const resource = computed(() => route.params.resource);
+const path = computed(() => pathMatch.value ? '/' + pathMatch.value?.join('/') : undefined);
+const thing = computed(() => (path.value || resource.value));
+
+function back() {
+  window.history.go(-2);
+}
+
 </script>
-
 
 <template>
   <div>
-    <h1>Not Found</h1>
-    <h3 class='path'><i>{{ path }}</i></h3>
+    <h1>{{ resource && 'Resource'}} Not Found</h1>
+    <h3 v-if='thing' class='path'><i>{{ thing }}</i></h3>
     <br>
-    <i><a href="#" @click.stop=back>Go Back</a></i>&nbsp;|&nbsp;
+    <i><a href='#' @click.stop.prevent="back">Go Back</a></i>&nbsp;|&nbsp;
     <i><a href="/">Go Home</a></i>
     <hr>
     <pre>{{ route }}</pre>

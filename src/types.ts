@@ -1,9 +1,9 @@
 import type { Component } from 'vue';
 
 export interface BaseRoute {
-    path: string;
-    name?: string;
-    meta?: Record<string, any>;
+  path: string;
+  name?: string;
+  meta?: Record<string, any>;
 }
 
 export interface ComponentRoute extends BaseRoute {
